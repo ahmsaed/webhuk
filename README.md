@@ -1,9 +1,11 @@
+
 # Webhuk
 A simple TypeScript app for receiving webhook events and sending them to subscribed endpoints.
 
 ## Demo
 
-[Watch demo video](./images/recording.mp4)
+[webhuk.webm](https://github.com/user-attachments/assets/a03305d0-2421-492e-8983-86c92fef9dca)
+
 
 ## What it does
 
@@ -37,6 +39,3 @@ A simple TypeScript app for receiving webhook events and sending them to subscri
 - `POST /webhook` — trigger a webhook event
 - `GET /deliveries` — view delivery demo data
 
-## Notes
-
-This is a basic webhook delivery system for learning and testing async job processing.
