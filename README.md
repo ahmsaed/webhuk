@@ -1,6 +1,6 @@
 
 # Webhuk
-A simple TypeScript app for receiving webhook events and sending them to subscribed endpoints.
+TypeScript app for receiving webhook events and sending them to subscribed endpoints.
 
 ## Demo
 
