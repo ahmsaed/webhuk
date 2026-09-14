@@ -3,7 +3,7 @@ A simple TypeScript app for receiving webhook events and sending them to subscri
 
 ## Demo
 
-<video src="./images/recording.mp4" controls autoplay muted loop playsinline></video>
+[Watch demo video](./images/recording.mp4)
 
 ## What it does
 
