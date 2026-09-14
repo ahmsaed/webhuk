@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Webhook Delivery — Live Demo</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #12181f;
+    --border: #232b35;
+    --text: #d7dde3;
+    --dim: #6b7684;
+    --amber: #e8a33d;
+    --green: #4fb477;
+    --red: #e05d5d;
+    --blue: #5a9bd4;
+    --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 32px;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    color: var(--dim);
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  button {
+    background: var(--blue);
+    color: #08131c;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { opacity: 0.88; }
+  button.secondary {
+    background: transparent;
+    color: var(--dim);
+    border: 1px solid var(--border);
+  }
+
+  .lanes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .lane {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    min-height: 90px;
+  }
+  .lane-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--dim);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .lane-count {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--text);
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; margin-right: 6px;
+  }
+  .pending .dot { background: var(--amber); }
+  .active .dot { background: var(--blue); }
+  .success .dot { background: var(--green); }
+  .failed .dot { background: var(--red); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--dim);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr.new-row { animation: flash 1s ease; }
+  @keyframes flash {
+    0% { background: rgba(90,155,212,0.15); }
+    100% { background: transparent; }
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge.pending { background: rgba(232,163,61,0.15); color: var(--amber); }
+  .badge.active { background: rgba(90,155,212,0.15); color: var(--blue); }
+  .badge.success { background: rgba(79,180,119,0.15); color: var(--green); }
+  .badge.failed { background: rgba(224,93,93,0.15); color: var(--red); }
+
+  .attempts { color: var(--dim); font-size: 11.5px; }
+  .attempts b { color: var(--text); }
+</style>
+</head>
+<body>
+
+  <h1>Webhook Delivery System</h1>
+
+  <div class="controls">
+    <button onclick="sendEvent()">Send test event</button>
+    <button class="secondary" onclick="clearAll()">Clear</button>
+  </div>
+
+  <div class="lanes">
+    <div class="lane pending">
+      <div class="lane-label"><span><span class="dot"></span>Pending</span></div>
+      <div class="lane-count" id="count-pending">0</div>
+    </div>
+    <div class="lane active">
+      <div class="lane-label"><span><span class="dot"></span>Delivering</span></div>
+      <div class="lane-count" id="count-active">0</div>
+    </div>
+    <div class="lane success">
+      <div class="lane-label"><span><span class="dot"></span>Success</span></div>
+      <div class="lane-count" id="count-success">0</div>
+    </div>
+    <div class="lane failed">
+      <div class="lane-label"><span><span class="dot"></span>Failed</span></div>
+      <div class="lane-count" id="count-failed">0</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Delivery ID</th>
+        <th>Subscriber</th>
+        <th>Status</th>
+        <th>Attempts</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+<script>
+  let nextId = 1;
+  const deliveries = [];
+  const subscribers = ['sub_1 (localhost:4000)', 'sub_5 (localhost:4000)'];
+
+  function counts() {
+    const c = { pending: 0, active: 0, success: 0, failed: 0 };
+    deliveries.forEach(d => c[d.status]++);
+    document.getElementById('count-pending').textContent = c.pending;
+    document.getElementById('count-active').textContent = c.active;
+    document.getElementById('count-success').textContent = c.success;
+    document.getElementById('count-failed').textContent = c.failed;
+  }
+
+  function render() {
+    const rows = document.getElementById('rows');
+    rows.innerHTML = deliveries.slice().reverse().map(d => `
+      <tr class="${d.isNew ? 'new-row' : ''}">
+        <td>#${d.id}</td>
+        <td>${d.subscriber}</td>
+        <td><span class="badge ${d.status}"><span class="dot"></span>${d.status}</span></td>
+        <td class="attempts">${d.attempts.map(a => `<b>${a}</b>`).join(' → ') || '—'}</td>
+      </tr>
+    `).join('');
+    counts();
+  }
+
+  const API_BASE = 'http://localhost:3000'; // change to your server's port
+
+  async function sendEvent() {
+    await fetch(`${API_BASE}/webhook`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_type: 'order.payment', payload: { message: 'checking' } })
+    });
+    // no need to touch `deliveries` here — the next poll() call picks up the new rows
+  }
+
+  async function poll() {
+    try {
+      const res = await fetch(`${API_BASE}/deliveries`);
+      const data = await res.json();
+      deliveries.length = 0;
+      data.forEach(d => deliveries.push({
+        id: d.id,
+        subscriber: `sub_${d.subscriber_id}`,
+        status: d.status,
+        attempts: (d.attempts || []).filter(Boolean).map(String)
+      }));
+      render();
+    } catch (err) {
+      console.error('poll failed — is your server running with CORS enabled?', err);
+    }
+  }
+
+  function clearAll() {
+    // visual only — doesn't touch your DB
+    deliveries.length = 0;
+    render();
+  }
+
+  setInterval(poll, 1000); // poll every second
+  poll();
+</script>
+
+</body>
+</html>
