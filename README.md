@@ -1,10 +1,9 @@
-# Webhook Delivery System
-
+# Webhuk
 A simple TypeScript app for receiving webhook events and sending them to subscribed endpoints.
 
 ## Demo
 
-<video src="./images/webhuk.webm" controls autoplay muted loop playsinline></video>
+[demo](./webhuk.webm)
 
 ## What it does
 
