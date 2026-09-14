@@ -18,6 +18,8 @@ const webHook = async (req: Request, res: Response) => {
     AND is_active = true RETURNING *;`,
     [body.payload, body.event_type],
   );
+
+  
   res.status(202).send(dbResult.rows);
 }
 
