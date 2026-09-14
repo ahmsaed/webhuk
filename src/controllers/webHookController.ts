@@ -24,10 +24,13 @@ const webHook = async (req: Request, res: Response) => {
     const subscriber = await pool.query('SELECT subscriber_url FROM subscribers WHERE id = $1', [delivery.subscriber_id]);
 
     await myQueue.add('deliver', {
+
       eventDeliveryId: delivery.id,
       subscriberUrl: subscriber.rows[0].subscriber_url,
       payload: body.payload,
-    });
+
+    },{      attempts: 5,
+      backoff: { type: 'exponential', delay: 1000 },});
   }
 
   res.status(202).send('queued');

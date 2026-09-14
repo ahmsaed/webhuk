@@ -20,7 +20,11 @@ console.log('job data:', job.data)
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(payload),
 });
-    if (!res.ok) throw new Error("failed!")
+     await pool.query(
+    'INSERT INTO attempts (event_delivery_id, attempt_number, response_status) VALUES ($1, $2, $3)',
+    [eventDeliveryId, job.attemptsMade + 1, res.status]
+  );
+  if (!res.ok) throw new Error('failed!'); 
      await pool.query(
     'UPDATE event_deliveries SET status = $1 WHERE id = $2',
     ['success', eventDeliveryId]
