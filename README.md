@@ -3,7 +3,7 @@ A simple TypeScript app for receiving webhook events and sending them to subscri
 
 ## Demo
 
-[demo](./webhuk.webm)
+[demo](./images/webhuk.webm)
 
 ## What it does
 
