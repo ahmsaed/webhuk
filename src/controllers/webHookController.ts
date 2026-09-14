@@ -25,7 +25,7 @@ const webHook = async (req: Request, res: Response) => {
 
     await myQueue.add('deliver', {
       eventDeliveryId: delivery.id,
-      subscriberUrl: subscriber.rows[0].url,
+      subscriberUrl: subscriber.rows[0].subscriber_url,
       payload: body.payload,
     });
   }
